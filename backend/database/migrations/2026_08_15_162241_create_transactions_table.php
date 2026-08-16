@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->date('transaction_date');
-            $table->foreignId('coa_id')
-                ->constrained('chart_of_accounts')
+            $table->date('transaction_date')->index();
+            $table->foreignId('coa_id') // index dibuat otomatik karena FK
+                ->constrained('chart_of_accounts') // index dibuat otomatis karena FK
                 ->restrictOnDelete();
             $table->string('description');
             $table->decimal('debit', 15, 2)->default(0);

@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('chart_of_accounts', function (Blueprint $table) {
-    $table->id();
-    $table->string('code')->unique();
-    $table->string('name');
-    $table->foreignId('category_id')
-        ->constrained()
-        ->restrictOnDelete();
-    $table->timestamps();
-});
+            $table->id();
+            $table->string('code')->unique();
+            $table->string('name');
+            $table->foreignId('category_id') // index dibuat otomatis karena FK
+                ->constrained()
+                ->restrictOnDelete();
+            $table->timestamps();
+        });
     }
 
     /**
