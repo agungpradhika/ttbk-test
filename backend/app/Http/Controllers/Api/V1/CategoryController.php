@@ -45,14 +45,14 @@ class CategoryController extends Controller
     {
         if ($category->chartOfAccounts()->exists()) {
             return response()->json([
-                'message' => 'Category cannot be deleted because it is being used.',
+                'message' => 'Kategori tidak dapat dihapus karena sudah digunakan dalam transaksi akun (COA).',
             ], 422);
         }
 
         $category->delete();
 
         return response()->json([
-            'message' => 'Category deleted successfully.',
+            'message' => 'Kategori berhasil dihapus.',
         ]);
     }
 }

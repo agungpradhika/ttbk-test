@@ -53,16 +53,17 @@ class ChartOfAccountController extends Controller
     public function destroy(
         ChartOfAccount $chartOfAccount
     ): JsonResponse {
+        // cek kondisi jika akunn sudah digunakann di transaksi
         if ($chartOfAccount->transactions()->exists()) {
             return response()->json([
-                'message' => 'COA cannot be deleted because it is being used.',
+                'message' => 'Akunn tidak dapat dihapus karena sudah digunakan dalam transaksi.',
             ], 422);
         }
 
         $chartOfAccount->delete();
 
         return response()->json([
-            'message' => 'COA deleted successfully.',
+            'message' => 'Akun berhasil dihapus.',
         ]);
     }
 }
