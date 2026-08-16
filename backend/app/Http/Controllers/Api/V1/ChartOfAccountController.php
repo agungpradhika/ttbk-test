@@ -11,13 +11,20 @@ use Illuminate\Http\JsonResponse;
 
 class ChartOfAccountController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $query = ChartOfAccount::query()->with('category');
+
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('code', 'like', $searchTerm)
+                  ->orWhere('name', 'like', $searchTerm);
+            });
+        }
+
         return ChartOfAccountResource::collection(
-            ChartOfAccount::query()
-                ->with('category')
-                ->orderBy('code')
-                ->paginate(15)
+            $query->orderBy('code')->paginate(15)
         );
     }
 

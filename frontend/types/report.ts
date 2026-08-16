@@ -6,4 +6,10 @@ export interface ProfitLossReport {
     income: number
     expense: number
     net_profit: number
+    categories: Array<{
+        id: number
+        name: string
+        type: 'income' | 'expense'
+        total: number
+    }>
 }

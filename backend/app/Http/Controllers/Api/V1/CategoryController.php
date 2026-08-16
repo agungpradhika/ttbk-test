@@ -11,12 +11,16 @@ use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $query = Category::query();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
         return CategoryResource::collection(
-            Category::query()
-                ->orderBy('name')
-                ->paginate(15)
+            $query->orderBy('name')->paginate(15)
         );
     }
 

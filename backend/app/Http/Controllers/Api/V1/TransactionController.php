@@ -16,13 +16,33 @@ class TransactionController extends Controller
         private readonly TransactionService $transactionService
     ) {}
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $query = Transaction::query()->with('chartOfAccount.category');
+
+        if ($request->filled('from')) {
+            $query->whereDate('transaction_date', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('transaction_date', '<=', $request->to);
+        }
+
+        if ($request->filled('coa_id')) {
+            $query->where('coa_id', $request->coa_id);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('description', 'like', '%' . $request->search . '%');
+        }
+
+        $perPage = $request->integer('per_page', 25);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 25;
+        }
+
         return TransactionResource::collection(
-            Transaction::query()
-                ->with('chartOfAccount.category')
-                ->latest('transaction_date')
-                ->paginate(20)
+            $query->latest('transaction_date')->paginate($perPage)
         );
     }
 

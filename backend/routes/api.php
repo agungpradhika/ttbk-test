@@ -12,4 +12,5 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('transactions', TransactionController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::get('profit-loss', ProfitLossController::class);
+    Route::get('dashboard/chart', \App\Http\Controllers\Api\V1\DashboardController::class);
 });

@@ -10,10 +10,12 @@ export const useChartOfAccounts = () => {
     const errors = ref<Record<string, string[]>>({})
 
     // 1. GET: Mengambil daftar akun dari backend
-    const fetchCoas = async () => {
+    const fetchCoas = async (search?: string) => {
         loading.value = true
         try {
-            const response = await api<{ data: ChartOfAccount[] }>('/chart-of-accounts')
+            const response = await api<{ data: ChartOfAccount[] }>('/chart-of-accounts', {
+                params: search ? { search } : undefined
+            })
             coas.value = response.data
         } catch (err: any) {
             toast.danger('Gagal mengambil daftar akun (COA).')
@@ -81,10 +83,13 @@ export const useChartOfAccounts = () => {
             await fetchCoas()
             return true
         } catch (err: any) {
-            if (err.status === 422) {
-                toast.danger(err.data.message)
+            const status = err.statusCode || err.status || err.response?.status
+            const message = err.data?.message || err.response?._data?.message || 'Gagal menghapus akun.'
+            
+            if (status === 422) {
+                toast.danger(message)
             } else {
-                toast.danger('Gagal menghapus akun.')
+                toast.danger(message)
             }
             return false
         } finally {

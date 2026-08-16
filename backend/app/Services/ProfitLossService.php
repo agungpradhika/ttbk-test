@@ -81,35 +81,27 @@ class ProfitLossService
         $income = $result->income ?? 0;
         $expense = $result->expense ?? 0;
 
-        // ==========================================
-        // PILIHAN B: VERSI SEBELUM OPTIMASI (ELOQUENT COLLECTION) -> NON-AKTIF
-        // (Uncomment ini dan comment Pilihan A jika ingin mengetes perbedaan kecepatan/memori)
-        // ==========================================
-        /*
-        $transactions = Transaction::query()
-            ->with('chartOfAccount.category')
-            ->whereBetween('transaction_date', [
-                $fromDate,
-                $toDate,
-            ])
+        // Hitung rincian per kategori secara dinamis (BE-based breakdown)
+        $categoriesWithSums = \App\Models\Category::query()
+            ->leftJoin('chart_of_accounts', 'categories.id', '=', 'chart_of_accounts.category_id')
+            ->leftJoin('transactions', function ($join) use ($fromDate, $toDate) {
+                $join->on('chart_of_accounts.id', '=', 'transactions.coa_id')
+                     ->whereBetween('transactions.transaction_date', [$fromDate, $toDate]);
+            })
+            ->selectRaw('
+                categories.id,
+                categories.name,
+                categories.type,
+                SUM(
+                    CASE 
+                        WHEN categories.type = ? THEN COALESCE(transactions.credit, 0)
+                        ELSE COALESCE(transactions.debit, 0)
+                    END
+                ) as total
+            ', [CategoryType::INCOME->value])
+            ->groupBy('categories.id', 'categories.name', 'categories.type')
+            ->orderBy('categories.name')
             ->get();
-
-        $income = $transactions
-            ->filter(
-                fn ($transaction) =>
-                    $transaction->chartOfAccount->category->type
-                    === CategoryType::INCOME
-            )
-            ->sum('credit');
-
-        $expense = $transactions
-            ->filter(
-                fn ($transaction) =>
-                    $transaction->chartOfAccount->category->type
-                    === CategoryType::EXPENSE
-            )
-            ->sum('debit');
-        */
 
         return [
             'period' => [
@@ -119,6 +111,12 @@ class ProfitLossService
             'income' => $income,
             'expense' => $expense,
             'net_profit' => $income - $expense,
+            'categories' => $categoriesWithSums->map(fn($cat) => [
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'type' => $cat->type instanceof CategoryType ? $cat->type->value : $cat->type,
+                'total' => (float)($cat->total ?? 0),
+            ])->toArray(),
         ];
     }
 }

@@ -1,62 +1,29 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const route = useRoute()
+
+// Mengambil title dari meta halaman secara dinamis (default: 'TBK')
+const pageTitle = computed(() => (route.meta.title as string) || 'TBK')
+</script>
+
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <div class="flex min-h-screen">
-      <aside class="w-64 bg-gray-900 text-white">
-        <div class="p-6">
-          <h1 class="text-xl font-bold">
-            Accounting
-          </h1>
-        </div>
+  <div class="min-h-screen bg-slate-50 flex">
+    <!-- Sidebar Kiri -->
+    <AppSidebar />
 
-        <nav class="px-4">
-          <NuxtLink
-            to="/"
-            class="block rounded-lg px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            Dashboard
-          </NuxtLink>
+    <!-- Konten Utama (Kanan) -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header Atas -->
+      <AppHeader :title="pageTitle" />
 
-          <NuxtLink
-            to="/categories"
-            class="block rounded-lg px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            Categories
-          </NuxtLink>
-
-          <NuxtLink
-            to="/chart-of-accounts"
-            class="block rounded-lg px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            Chart of Accounts
-          </NuxtLink>
-
-          <NuxtLink
-            to="/transactions"
-            class="block rounded-lg px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            Transactions
-          </NuxtLink>
-
-          <NuxtLink
-            to="/profit-loss"
-            class="block rounded-lg px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            Profit & Loss
-          </NuxtLink>
-        </nav>
-      </aside>
-
-      <main class="flex-1">
-        <header class="border-b bg-white px-8 py-5">
-          <h2 class="text-xl font-semibold text-gray-800">
-            Accounting Dashboard
-          </h2>
-        </header>
-
-        <div class="p-8">
-          <slot />
-        </div>
+      <!-- Area Halaman Aktif -->
+      <main class="flex-1 p-8">
+        <slot />
       </main>
     </div>
+
+    <!-- Floating Toast Alert -->
+    <ToastNotification />
   </div>
 </template>

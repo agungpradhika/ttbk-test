@@ -9,12 +9,40 @@ export const useTransactions = () => {
     const loading = ref<boolean>(false)
     const errors = ref<Record<string, string[]>>({})
 
+    // Meta pagination untuk frontend
+    const pagination = ref({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        per_page: 50
+    })
+
     // 1. GET: Mengambil riwayat transaksi dari backend
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (filters?: {
+        from?: string
+        to?: string
+        coa_id?: number | ''
+        search?: string
+        page?: number
+        per_page?: number
+    }) => {
         loading.value = true
         try {
-            const response = await api<{ data: Transaction[] }>('/transactions')
+            const response = await api<{ 
+                data: Transaction[]
+                meta: {
+                    current_page: number
+                    last_page: number
+                    total: number
+                    per_page: number
+                }
+            }>('/transactions', {
+                params: filters
+            })
             transactions.value = response.data
+            if (response.meta) {
+                pagination.value = response.meta
+            }
         } catch (err: any) {
             toast.danger('Gagal mengambil riwayat transaksi.')
         } finally {
@@ -56,6 +84,7 @@ export const useTransactions = () => {
         transactions,
         loading,
         errors,
+        pagination,
         fetchTransactions,
         createTransaction
     }

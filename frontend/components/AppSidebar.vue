@@ -3,11 +3,11 @@
     <!-- Logo/Brand -->
     <div class="p-6 border-b border-slate-800">
       <h1 class="text-xl font-bold tracking-wider text-emerald-400 flex items-center gap-2">
-        <span>📖</span> BukuKas
+        <span>📖</span> TBK
       </h1>
     </div>
 
-    <!-- Navigasi -->
+    <!-- Navigation -->
     <nav class="flex-1 px-4 py-6 space-y-1">
       <NuxtLink
         to="/"
@@ -22,7 +22,7 @@
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition text-slate-300 hover:bg-slate-800 hover:text-white"
         active-class="bg-emerald-600 !text-white font-semibold"
       >
-        <span>🏷️</span> Kategori
+        <span>🏷️</span> Categories
       </NuxtLink>
 
       <NuxtLink
@@ -30,7 +30,7 @@
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition text-slate-300 hover:bg-slate-800 hover:text-white"
         active-class="bg-emerald-600 !text-white font-semibold"
       >
-        <span>🗂️</span> Bagan Akun (COA)
+        <span>🗂️</span> Chart of Accounts
       </NuxtLink>
 
       <NuxtLink
@@ -38,7 +38,7 @@
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition text-slate-300 hover:bg-slate-800 hover:text-white"
         active-class="bg-emerald-600 !text-white font-semibold"
       >
-        <span>💸</span> Transaksi Jurnal
+        <span>💸</span> Transactions
       </NuxtLink>
 
       <NuxtLink
@@ -46,7 +46,7 @@
         class="flex items-center gap-3 px-4 py-3 rounded-xl transition text-slate-300 hover:bg-slate-800 hover:text-white"
         active-class="bg-emerald-600 !text-white font-semibold"
       >
-        <span>📈</span> Laba Rugi
+        <span>📈</span> Profit & Loss
       </NuxtLink>
     </nav>
   </aside>

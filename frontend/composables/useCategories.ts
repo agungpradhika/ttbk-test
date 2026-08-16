@@ -10,10 +10,12 @@ export const useCategories = () => {
     const errors = ref<Record<string, string[]>>({})
 
     // 1. GET: Ambil semua data kategori dari backend
-    const fetchCategories = async () => {
+    const fetchCategories = async (search?: string) => {
         loading.value = true
         try {
-            const response = await api<{ data: Category[] }>('/categories')
+            const response = await api<{ data: Category[] }>('/categories', {
+                params: search ? { search } : undefined
+            })
             categories.value = response.data
         } catch (err: any) {
             toast.danger('Gagal mengambil data kategori.')
