@@ -131,8 +131,8 @@ const handleFormSubmit = async (formData: any) => {
     <LoadingSpinner v-if="loading" message="Syncing ledger transactions..." />
 
     <!-- Transaction Ledger Table -->
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <table class="w-full text-left border-collapse">
+    <div v-else class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[700px]">
         <thead>
           <tr class="bg-slate-50 text-slate-400 text-xs font-bold uppercase border-b border-slate-100">
             <th class="px-6 py-4">Date</th>
