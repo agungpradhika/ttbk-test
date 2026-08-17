@@ -1,115 +1,195 @@
-# Trans Berjaya Khatulistiwa (TBK) - Sistem Buku Besar & Laba Rugi Akuntansi
+# Aplikasi Akuntansi - Trans Berjaya Khatulistiwa (TBK)
 
-Sistem buku besar akuntansi (*ledger system*) berbasis web berkinerja tinggi yang dibangun menggunakan **Laravel 11 (Backend)** dan **Nuxt 3 (Frontend)**. Aplikasi ini menyediakan pelacakan keuangan real-time, pengaman entri ganda (*double-entry bookkeeping safeguards*), kalkulasi Laba & Rugi dinamis, serta dasbor analitik yang dioptimalkan untuk skala besar (diuji dengan 150.000+ data transaksi).
+Aplikasi manajemen keuangan dan buku besar akuntansi (*general ledger*) profesional berbasis web yang dibangun dengan arsitektur terpisah antara **Laravel 13 REST API (Backend)** dan **Nuxt 3 (Frontend)**. 
 
----
-
-## 🛠️ Persyaratan Sistem
-
-Sebelum melakukan pengaturan proyek, pastikan Anda telah memasang perangkat lunak berikut di komputer Anda:
-* **PHP:** `>= 8.2`
-* **Composer:** `>= 2.x`
-* **Node.js:** `>= 18.x` (Direkomendasikan: `v20.x`)
-* **NPM:** `>= 9.x`
-* **Sistem Database:** SQLite (default untuk pengembangan) atau MySQL/PostgreSQL.
+Sistem ini dioptimalkan khusus untuk menangani skala data transaksi besar (diuji dengan 150.000+ data transaksi) dengan performa tinggi, validasi aturan akuntansi yang ketat, visualisasi analitik interaktif, serta kemampuan ekspor laporan profesional.
 
 ---
 
-## 🚀 Pemasangan & Pengaturan Lokal
+## 🛠️ Tech Stack
 
-### 1. Pengaturan Backend (Laravel)
-1. Masuk ke direktori backend:
-   ```bash
-   cd backend
-   ```
-2. Pasang dependensi PHP:
-   ```bash
-   composer install
-   ```
-3. Salin file konfigurasi lingkungan (*environment*) dan buat *application key*:
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-4. Atur database. Secara default, aplikasi menggunakan **SQLite**. Buat file SQLite kosong jika belum ada:
-   ```bash
-   touch database/database.sqlite
-   ```
-5. Jalankan migrasi tabel database beserta seeder bawaan (ini akan membuat akun COA dan kategori awal):
-   ```bash
-   php artisan migrate --seed
-   ```
-6. Pengaturan Zona Waktu WIB (Waktu Indonesia Barat):
-   Zona waktu aplikasi telah diset ke `'Asia/Jakarta'` di dalam `config/app.php` untuk memastikan pencatatan `created_at` dan `updated_at` akurat sesuai zona waktu lokal.
-7. Jalankan server pengembangan Laravel:
-   ```bash
-   php artisan serve
-   ```
+### Backend
+* **PHP:** `8.3`
+* **Framework:** Laravel `13`
+* **Database:** MySQL `9` (Mendukung pengindeksan performa tinggi)
+* **ORM:** Laravel Eloquent ORM
+* **Format API:** REST API (JSON)
+* **Pengujian:** PHPUnit / Laravel Testing Suite
+* **Zona Waktu:** Asia/Jakarta (WIB) untuk pencatatan riwayat audit.
 
-### 2. Pengaturan Frontend (Nuxt 3)
-1. Masuk ke direktori frontend:
-   ```bash
-   cd ../frontend
-   ```
-2. Pasang dependensi Node packages:
-   ```bash
-   npm install
-   ```
-3. Salin file `.env.example` menjadi `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   *(Pastikan nilai `NUXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api/v1` sesuai dengan alamat server backend Laravel Anda)*
-4. Jalankan server pengembangan Nuxt:
-   ```bash
-   npm run dev
-   ```
-5. Buka browser Anda dan akses `http://localhost:3000`.
+### Frontend
+* **Node.js:** `22 LTS`
+* **Framework:** Nuxt `3` (Vue 3, Nuxt Composables, SSR-compatible)
+* **Bahasa Pemrograman:** TypeScript
+* **Styling (CSS):** Tailwind CSS & Custom CSS `@media print`
+* **Visualisasi Grafik:** Chart.js (diintegrasikan secara aman lewat pemuatan dinamis)
 
-### ⚡ Menggenerasi Data Uji Coba Massal (150.000+ Transaksi)
-Untuk menguji performa sistem di bawah beban data besar, kami telah menyediakan perintah khusus (*Artisan Command*) berkinerja tinggi yang memanfaatkan SQL bulk insert per 5.000 baris untuk memasukkan 150.000 data dalam hitungan detik:
+---
+
+## 📐 Arsitektur Sistem
+
+Aplikasi ini menggunakan arsitektur pemisahan tanggung jawab penuh antara frontend dan backend:
+
+```
+                    ┌──────────────────────┐
+                    │      Nuxt 3 FE       │
+                    │ Vue 3 + TypeScript   │
+                    └──────────┬───────────┘
+                               │
+                          REST API
+                               │
+                    ┌──────────▼───────────┐
+                    │    Laravel 13 API    │
+                    │                      │
+                    │ Controllers          │
+                    │ Form Requests        │
+                    │ Services             │
+                    │ Models               │
+                    └──────────┬───────────┘
+                               │
+                           Eloquent
+                               │
+                    ┌──────────▼───────────┐
+                    │        MySQL         │
+                    └──────────────────────┘
+```
+
+Frontend bertanggung jawab penuh atas presentasi visual dan interaksi pengguna, sedangkan aturan bisnis (*business rules*) serta perhitungan keuangan dihitung sepenuhnya oleh backend guna mencegah manipulasi.
+
+---
+
+## 🗄️ Desain Database & Aturan Bisnis
+
+Relasi utama antar entitas di dalam database:
+
+```
+Category (Kategori)
+   │
+   │ 1:N
+   ▼
+Chart of Account (Akun COA)
+   │
+   │ 1:N
+   ▼
+Transaction (Transaksi Buku Besar)
+```
+
+### 1. Klasifikasi Kategori (Income & Expense)
+Setiap kategori memiliki tipe (*type*) tegas yang membedakan:
+* **income** (Pendapatan)
+* **expense** (Beban/Pengeluaran)
+
+Klasifikasi ini disimpan di tingkat kategori untuk mencegah redudansi data di setiap transaksi. Alurnya adalah:
+`Transaction` ➜ `Chart of Account` ➜ `Category` ➜ `Income / Expense`.
+
+### 2. Aturan Ketat Debit dan Kredit
+Sistem mematuhi aturan baku pencatatan akuntansi ganda (*double-entry bookkeeping*):
+* **Kategori Income (Pendapatan):** Bertambah di posisi **Credit** (Debit harus bernilai `0`).
+* **Kategori Expense (Beban):** Bertambah di posisi **Debit** (Credit harus bernilai `0`).
+
+**Validasi Form Otomatis (Frontend):**
+* Memilih akun bertipe *Income* otomatis **mengunci kolom input Debit** (memaksa nilai `0`).
+* Memilih akun bertipe *Expense* otomatis **mengunci kolom input Credit** (memaksa nilai `0`).
+
+**Validasi Keamanan API (Backend):**
+Backend melakukan validasi berlapis untuk mencegah manipulasi request API:
+* Transaksi tidak boleh memiliki nilai Debit dan Credit sekaligus.
+* Transaksi tidak boleh bernilai nol (`0`) pada kedua kolom sekaligus.
+
+---
+
+## ⚡ Fitur Utama & Optimasi Performa
+
+### 1. Optimasi Kalkulasi Laporan Laba Rugi (Profit & Loss)
+* **Sebelumnya:** Perhitungan dilakukan di tingkat aplikasi dengan mengambil seluruh data transaksi ke PHP, lalu melakukan penyaringan menggunakan Laravel Collection. Ini berpotensi memicu *memory exhaustion* jika data berjumlah besar.
+* **Setelah Optimasi:** Kalkulasi dipindahkan sepenuhnya ke database menggunakan **Raw SQL Joins** dan agregasi `SUM(CASE WHEN ...)` dengan pengelompokan `GROUP BY`.
+* **Kategori Dinamis:** Rincian kategori laba rugi bersifat dinamis. Kategori baru yang ditambahkan di menu *Categories* akan otomatis terhitung dan merinci bagian Pendapatan/Pengeluaran pada Laporan Laba Rugi tanpa mengubah kode apa pun.
+* **Kecepatan Tinggi:** Proses kalkulasi pada **150.000+ data transaksi** selesai dalam waktu **di bawah 100ms**!
+
+### 2. Navigasi Halaman & Batas Data Dinamis (Pagination)
+* Buku besar transaksi dilengkapi dengan sistem paginasi dinamis.
+* Pengguna dapat memilih jumlah data per halaman: **10, 25, 50, atau 100 data**.
+* Default diatur ke **25 data per halaman** untuk kenyamanan akses performa tinggi.
+
+### 3. Ekspor Dokumen Keuangan
+* **Ekspor Excel:** Menghasilkan file spreadsheet dengan format tabel akuntansi yang rapi. Seluruh nominal angka diekspor dengan format mata uang **Rupiah lengkap** (misal: `Rp 5.000.000`) dan penulisan minus akuntansi bertanda kurung `(Rp 250.000)` untuk bagian pengeluaran.
+* **Cetak PDF Rapi:** Menggunakan CSS `@media print` kustom. Saat tombol cetak ditekan, sidebar menu navigasi, form saringan tanggal, tombol aksi, dan ornamen web lainnya akan disembunyikan otomatis, menyisakan lembar laporan keuangan bersih yang pas untuk cetakan fisik/PDF.
+
+### 4. Dasbor Interaktif (Dashboard)
+* **Grafik Batang Perbandingan Bulanan:** Menampilkan grafik batang interaktif (Chart.js) yang membandingkan total *Income* vs *Expense* per bulan sepanjang tahun dengan **Filter Tahun Dinamis** (2024 - 2027).
+* **Recent Transactions:** Panel sisi kanan menampilkan **5 transaksi buku besar terakhir** yang dicatat di database beserta tanggal, keterangan, dan nilai (+ Hijau / - Merah).
+
+### 5. Komponen UI Premium
+* **Loading Spinner:** Animasi pemuat reaktif kustom di setiap halaman saat pencarian, pergantian tahun, pergantian halaman, atau proses saringan tanggal sedang berlangsung.
+* **ConfirmModal Hapus Kustom:** Mengganti dialog konfirmasi bawaan browser (`confirm()`) dengan modal pop-up kustom yang memperingatkan integritas relasi data (misalnya: memperingatkan jika akun COA tidak dapat dihapus karena sudah memiliki transaksi).
+
+---
+
+## 🔍 Kebijakan Integritas: Mengapa Transaksi Tidak Bisa Diedit / Dihapus?
+
+Aplikasi ini menonaktifkan fitur Edit dan Hapus pada lembar Buku Besar Transaksi yang telah disimpan:
+* **Jejak Audit (Audit Trail):** Untuk mematuhi prinsip pencegahan manipulasi keuangan (*anti-fraud*), transaksi yang sudah dibukukan tidak boleh dihilangkan.
+* **Mekanisme Koreksi:** Kesalahan entri diperbaiki dengan membuat **Jurnal Pembalik (Reversing Entry)** untuk menihilkan kesalahan, dilanjutkan dengan mencatat **Jurnal Penyesuaian (Adjusting Entry)** baru yang benar.
+
+---
+
+## 🚀 Panduan Instalasi Lokal
+
+### 1. Backend (Laravel)
 ```bash
 cd backend
-php artisan app:generate-huge-data 150000
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
-Perintah ini akan menyebarkan 150.000 transaksi secara acak di antara rentang tanggal **1 Januari hingga 31 Agustus 2026**.
+
+**Konfigurasi Database `.env` (MySQL):**
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=backend
+DB_USERNAME=root
+DB_PASSWORD=password_anda
+```
+
+**Jalankan Migrasi & Menghasilkan Data Uji:**
+```bash
+# Migrasi tabel dan seeder awal (COA & Categories)
+php artisan migrate --seed
+
+# Menggenerasi 150.000 data transaksi uji coba secara otomatis (Jan - Agt 2026)
+php artisan app:generate-huge-data 150000
+
+# Jalankan server
+php artisan serve
+```
+
+### 2. Frontend (Nuxt 3)
+Buka terminal baru di folder proyek utama:
+```bash
+cd frontend
+npm install
+cp .env.example .env
+```
+*(Pastikan berkas `.env` berisi URL API backend: `NUXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api/v1`)*
+
+```bash
+# Jalankan server frontend
+npm run dev
+```
+Aplikasi akan siap diakses lewat browser di alamat `http://localhost:3000`.
 
 ---
 
-## 💼 Alur Bisnis & Arsitektur Akuntansi
+## 🧪 Perintah Pengembangan
 
-Sistem ini dirancang dengan mematuhi standar akuntansi profesional (**GAAP / IFRS**) dan menyertakan modul keuangan khusus sebagai berikut:
+### Backend
+* Jalankan server: `php artisan serve`
+* Migrasi ulang dari awal (menghapus semua data): `php artisan migrate:fresh --seed`
+* Menjalankan unit testing otomatis: `php artisan test`
 
-### 1. Manajemen Kategori (Pendapatan & Pengeluaran)
-* Kategori membagi klasifikasi Akun Buku Besar (COA) ke dalam kelompok **Income** (Pendapatan) atau **Expense** (Beban/Biaya).
-* Memanfaatkan Eloquent enums (`CategoryType`) untuk mencegah korupsi data tipe.
-* CRUD penuh dengan pelacak pencarian (*real-time watcher*) langsung ke backend.
-
-### 2. Klasifikasi Chart of Accounts (COA)
-* Akun Buku Besar dikelompokkan di bawah kategori induknya (misal, Kode `4001` - Pendapatan Gaji di bawah kategori `Income`, Kode `5001` - Pengeluaran Keluarga di bawah kategori `Expense`).
-* Ketika akun dihapus, sistem memvalidasi relasi transaksi terlebih dahulu di backend. Jika sudah digunakan, penghapusan dicegah menggunakan Modal Konfirmasi Kustom untuk menjaga integritas data keuangan.
-
-### 3. Transaksi Jurnal (Buku Besar Ledger)
-* **Pengaman Entri Ganda (Double-Entry Bookkeeping Safeguards):** Form entri transaksi secara dinamis mengunci kolom input berdasarkan tipe akun yang dipilih:
-  * Memilih akun bertipe **Income** akan mengunci input **Debit** (karena pendapatan bertambah di posisi Kredit).
-  * Memilih akun bertipe **Expense** akan mengunci input **Credit** (karena beban/biaya bertambah di posisi Debit).
-* Pengaman visual ini divalidasi ulang di backend menggunakan Laravel Form Request untuk memastikan tidak ada kesalahan input posisi keuangan.
-* Dilengkapi dengan navigasi halaman (*pagination*) dinamis serta pengaturan jumlah baris per halaman (10, 25, 50, 100) dengan default **25 baris per halaman** untuk kenyamanan berselancar di ratusan ribu data.
-
-### 4. Laporan Laba Rugi (Profit & Loss Statement)
-* Menghitung total Laba Rugi bersih secara real-time berdasarkan rentang tanggal yang dipilih.
-* **Optimasi Kinerja Tinggi:** Agregasi penjumlahan dilakukan langsung di tingkat database menggunakan Raw SQL Joins (`SUM`, `CASE WHEN`, dan `GROUP BY`) alih-alih koleksi PHP. Hal ini memastikan proses kalkulasi 150.000+ data selesai di bawah **100ms** tanpa memakan memori server.
-* Laporan bersifat dinamis: penambahan kategori baru di halaman Categories otomatis akan merinci pengelompokannya di Laba Rugi tanpa perlu mengubah kode frontend.
-
-### 5. Ekspor Dokumen Kustom
-* **Cetak PDF:** Menggunakan CSS media cetak kustom (`@media print`). Saat mencetak, sidebar navigasi utama, tombol aksi, dan form filter akan disembunyikan secara otomatis untuk menghasilkan cetakan laporan keuangan akuntansi yang bersih dan rapi.
-* **Ekspor Excel HTML:** Mengekspor grid laporan secara presisi ke berkas Excel dengan angka nominal yang terformat menggunakan gaya Rupiah (`Rp 100.000`) dan penulisan minus akuntansi bertanda kurung `(Rp 50.000)`.
-
----
-
-## 🔍 Mengapa Transaksi Sengaja Tidak Bisa Diedit / Dihapus?
-
-Salah satu fitur krusial dari sistem buku besar ini adalah **tidak adanya fitur Edit dan Delete pada data transaksi yang sudah dicatat**.
-* **Integritas Jejak Audit (Audit Trail):** Sesuai standar audit akuntansi profesional, jurnal keuangan yang sudah masuk ke buku besar tidak boleh diubah/dihapus secara bebas demi mencegah kecurangan (*manipulasi saldo/fraud*).
-* **Prosedur Koreksi Saldo:** Apabila terjadi kesalahan pencatatan, akuntan harus membuat **Jurnal Pembalik (Reversing Entry)** untuk menihilkan transaksi yang salah, lalu membuat **Jurnal Penyesuaian (Adjusting Entry)** baru dengan nilai yang benar.
-* Oleh karena itu, antarmuka transaksi didesain tanpa tombol edit/hapus untuk mematuhi kepatuhan standar audit ini.
+### Frontend
+* Mode Pengembangan: `npm run dev`
+* Membuat *Production Build*: `npm run build`
+* Preview hasil build: `npm run preview`
