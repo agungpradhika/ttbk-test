@@ -28,7 +28,7 @@ class GenerateHugeData extends Command
         $this->info("Generating {$count} transactions...");
 
         $startDate = Carbon::create(2026, 1, 1)->startOfDay();
-        $endDate = Carbon::create(2026, 8, 31)->endOfDay();
+        $endDate = Carbon::create(2026, 8, 16)->endOfDay();
         $totalDays = $startDate->diffInDays($endDate);
 
         $chunks = [];

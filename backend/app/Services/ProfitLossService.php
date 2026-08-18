@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CategoryType;
 use App\Models\Transaction;
+use App\Models\Category;
 use Carbon\Carbon;
 
 class ProfitLossService
@@ -14,7 +15,7 @@ class ProfitLossService
     ): array {
         $fromDate = $from
             ? Carbon::parse($from)->startOfDay()
-            : Carbon::create(1970, 1, 1)->startOfDay();
+            : Carbon::create(2026, 1, 1)->startOfDay();
 
         $toDate = $to
             ? Carbon::parse($to)->endOfDay()
@@ -82,7 +83,7 @@ class ProfitLossService
         $expense = $result->expense ?? 0;
 
         // Hitung rincian per kategori secara dinamis (BE-based breakdown)
-        $categoriesWithSums = \App\Models\Category::query()
+        $categoriesWithSums = Category::query()
             ->leftJoin('chart_of_accounts', 'categories.id', '=', 'chart_of_accounts.category_id')
             ->leftJoin('transactions', function ($join) use ($fromDate, $toDate) {
                 $join->on('chart_of_accounts.id', '=', 'transactions.coa_id')
@@ -102,6 +103,41 @@ class ProfitLossService
             ->groupBy('categories.id', 'categories.name', 'categories.type')
             ->orderBy('categories.name')
             ->get();
+
+        /*
+        // ==========================================
+        // PILIHAN B: VERSI SEBELUM OPTIMASI (ELOQUENT COLLECTION) -> NON-AKTIF (Hanya untuk demo presentasi perbandingan performa)
+        // ==========================================
+        // Ambil semua transaksi beserta relasi COA dan Kategori ke memori PHP
+        $transactions = Transaction::with(['chartOfAccount.category'])
+            ->whereBetween('transaction_date', [$fromDate, $toDate])
+            ->get();
+
+        // Hitung total pendapatan (income) di PHP Collection
+        $income = $transactions->filter(function ($t) {
+            return $t->chartOfAccount && $t->chartOfAccount->category && $t->chartOfAccount->category->type->value === CategoryType::INCOME->value;
+        })->sum('credit');
+
+        // Hitung total pengeluaran (expense) di PHP Collection
+        $expense = $transactions->filter(function ($t) {
+            return $t->chartOfAccount && $t->chartOfAccount->category && $t->chartOfAccount->category->type->value === CategoryType::EXPENSE->value;
+        })->sum('debit');
+
+        // Hitung rincian per kategori secara dinamis menggunakan Eloquent Collection
+        $allCategories = Category::all();
+        $categoriesWithSums = $allCategories->map(function ($category) use ($transactions) {
+            $total = $transactions->filter(function ($t) use ($category) {
+                return $t->chartOfAccount && $t->chartOfAccount->category_id && $t->chartOfAccount->category_id === $category->id;
+            })->sum($category->type->value === CategoryType::INCOME->value ? 'credit' : 'debit');
+
+            return (object) [
+                'id' => $category->id,
+                'name' => $category->name,
+                'type' => $category->type,
+                'total' => $total,
+            ];
+        });
+        */
 
         return [
             'period' => [
